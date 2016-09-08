@@ -13,12 +13,15 @@ from flask_sqlalchemy import SQLAlchemy
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@localhost/auth'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'role_test.db')
+
 app.config['SQLALCHEMY_BINDS'] = {
     'user': 'sqlite:///' + os.path.join(basedir, 'user_test.db')
 }
 
-db = SQLAlchemy(app)
+db = SQLAlchemy()
+db.init_app(app)
+
 
 class Role(db.Model):
     # 使用默认的SQLALCHEMY_DATABASE_URI数据库
@@ -51,17 +54,20 @@ class User(db.Model):
 
 
 if __name__ == "__main__":
-    db.drop_all()
-    db.create_all()
+    with app.test_request_context():
 
-    role = Role("worker")
-    db.session.add(role)
-    db.session.commit()
-    print role
+        print "app.config: {0}".format(app.config)
+        db.drop_all()
+        db.create_all()
 
-    user = User("vwms", role.id)
-    db.session.add(user)
-    db.session.commit()
-    print user
+        role = Role("worker")
+        db.session.add(role)
+        db.session.commit()
+        print role
 
-    app.run(debug='DEBUG')
+        user = User("vwms", role.id)
+        db.session.add(user)
+        db.session.commit()
+        print user
+
+        app.run(debug='DEBUG')
